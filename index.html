@@ -347,7 +347,7 @@
     <button id="btnCustomer" class="active">Client Portal</button>
     <button id="btnInternal">Internal — REV Team</button>
   </div>
-  <div class="switcher-note" id="switcherNote">Customer view &middot; data as of Oct 14, 2026</div>
+  <div class="switcher-note" id="switcherNote">Customer view &middot; data as of Oct 20, 2026</div>
 </div>
 
 <!-- ============================================================ -->
@@ -359,7 +359,7 @@
       <div>
         <h1>VoltaGrid Delivery Portal</h1>
       </div>
-      <div class="meta">Order <b>M200480</b><br>As of <b id="cvAsOf">Oct 14, 2026</b><br>Ship to <b class="shipAddr"></b></div>
+      <div class="meta">Order <b>M200480</b><br>As of <b id="cvAsOf">Oct 20, 2026</b><br>Ship to <b class="shipAddr"></b></div>
     </div>
   </div>
 
@@ -571,7 +571,7 @@ const internalView = document.getElementById('internalView');
 btnCustomer.addEventListener('click', ()=>{
   btnCustomer.classList.add('active'); btnInternal.classList.remove('active');
   customerView.classList.add('active'); internalView.classList.remove('active');
-  document.getElementById('switcherNote').innerHTML='Customer view &middot; data as of Oct 14, 2026';
+  document.getElementById('switcherNote').innerHTML='Customer view &middot; data as of Oct 20, 2026';
 });
 btnInternal.addEventListener('click', ()=>{
   btnInternal.classList.add('active'); btnCustomer.classList.remove('active');
