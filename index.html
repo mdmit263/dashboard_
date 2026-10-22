@@ -409,7 +409,7 @@
     <button id="btnClient" class="active">Client Portal</button>
     <button id="btnInternal">Internal — REV Team</button>
   </div>
-  <div class="switcher-note" id="switcherNote">Client view &middot; data as of Oct 21, 2026</div>
+  <div class="switcher-note" id="switcherNote">Client view &middot; data as of Oct 22, 2026</div>
 </div>
 
 <!-- ============================================================ -->
@@ -421,7 +421,7 @@
       <div>
         <h1>VoltaGrid Delivery Portal</h1>
       </div>
-      <div class="meta">Order <b>M200480</b><br>As of <b id="cvAsOf">Oct 21, 2026</b></div>
+      <div class="meta">Order <b>M200480</b><br>As of <b id="cvAsOf">Oct 22, 2026</b></div>
     </div>
   </div>
 
@@ -587,7 +587,7 @@ Object.keys(CV_RAIL).forEach(t=>CV_RAIL[t].forEach(u=>{ CV_SERIAL[t+'-'+u.serial
    Units are named TYPE-number (ICB-1 ... FCB-35) everywhere. Status comes from the live tracker (Oct 19) for every tracked unit.
    ICB units 1-187 pre-date the tracker, so they come from the RAIL sheet (Oct 14): units 1-176 shipped, the rest by RAIL CAT / ready-to-ship dates. */
 (function(){
-  const RAIL_ASOF='2026-10-14', ICB_BASE_SHIPPED=176, byUnit={};
+  const RAIL_ASOF='2026-10-14', ICB_BASE_SHIPPED=176, ICB_TODAY='2026-10-22', byUnit={};
   CV_RECORDS.forEach(r=>{ byUnit[r.unit]=r; });
   ['ICB','GCB','FCB'].forEach(t=>{
     const have=new Set(CV_RAIL[t].map(u=>u.serialNum));
@@ -599,21 +599,22 @@ Object.keys(CV_RAIL).forEach(t=>CV_RAIL[t].forEach(u=>{ CV_SERIAL[t+'-'+u.serial
   CV_RAIL.ICB.forEach(u=>{
     const id='ICB-'+u.serialNum; if(byUnit[id]) return;
     let stage, proxy=null;
-    if(u.serialNum<=ICB_BASE_SHIPPED){ stage='Shipped'; proxy=u.actualCAT||u.forecastCAT||null; }
-    else if(u.readyToShip && u.readyToShip<=RAIL_ASOF) stage='CAT Done — Awaiting Ship';
+    /* ICB: "ready to ship" in the source means shipped */
+    if(u.serialNum<=ICB_BASE_SHIPPED || (u.readyToShip && u.readyToShip<=ICB_TODAY)){ stage='Shipped'; proxy=u.readyToShip||u.actualCAT||u.forecastCAT||null; }
     else if(u.actualCAT && u.actualCAT<=RAIL_ASOF) stage='CAT Ready';
     else stage='Not Started';
-    const rec={type:'ICB',unit:id,job:'M200480-01',yard:null,started:null,internalTestReady:null,catReady:null,catDone:u.actualCAT||null,plannedShip:null,shipped:null,proxyShip:proxy,flag:null,stage};
+    const rec={type:'ICB',unit:id,job:'M200480-01',yard:null,started:null,internalTestReady:null,catReady:null,catDone:u.actualCAT||null,plannedShip:null,shipped:(stage==='Shipped'&&u.readyToShip)?u.readyToShip:null,proxyShip:proxy,flag:null,stage};
     CV_RECORDS.push(rec); byUnit[id]=rec;
   });
   ['ICB','GCB','FCB'].forEach(t=>CV_RAIL[t].forEach(u=>{ const id=t+'-'+u.serialNum; u.unit=id; u.cvRec=byUnit[id]||null; CV_SERIAL[id]=u; }));
+  CV_RAIL.ICB.forEach(u=>{ const r=u.cvRec; if(r && r.stage==='CAT Done — Awaiting Ship'){ r.stage='Shipped'; const d=r.plannedShip||u.readyToShip||null; if(d && d<=ICB_TODAY) r.shipped=d; else r.proxyShip=d||u.actualCAT||null; } });
   const K=CV_KPIS;
   ['ICB','GCB','FCB'].forEach(t=>{ const rs=CV_RECORDS.filter(r=>r.type===t);
     K.shipped[t]=rs.filter(r=>r.stage==='Shipped').length;
     K.inPipeline[t]=rs.filter(r=>r.stage!=='Shipped' && r.stage!=='Not Started' && r.stage!=='In the Yard').length; });
   K.totalShipped=K.shipped.ICB+K.shipped.GCB+K.shipped.FCB;
   K.totalInPipeline=K.inPipeline.ICB+K.inPipeline.GCB+K.inPipeline.FCB;
-  K.asOf='2026-10-21';
+  K.asOf='2026-10-22';
 })();
 
 
@@ -641,7 +642,7 @@ const IMPACTS = [
  {id:'S4',category:'material',title:'SAMPLE - Material status update',detail:'SAMPLE TEXT ONLY. Example: a component has a revised delivery date from the supplier.',scope:{type:'ICB',units:[[250,280]]},status:'Open',waitingOn:'Supplier',impactDays:5},
  {id:'S5',category:'changerequest',title:'SAMPLE - Client change request (resolved)',detail:'SAMPLE TEXT ONLY.',scope:{type:'ICB'},status:'Resolved',raised:'2026-09-20'}
 ];
-const IMPACT_ASOF = '2026-10-21';
+const IMPACT_ASOF = '2026-10-22';
 const IMPACT_CATS = {
   schedule:{label:'Schedule Impact',c:'#B45309',b:'#FEF3C7'},
   changeorder:{label:'Change Order',c:'#6D28D9',b:'#EDE9FE'},
@@ -746,7 +747,7 @@ document.addEventListener('click',(e)=>{
 
 
 /* ---- Schedule watch: evidence-based. A unit counts when it is not shipped and the Planned Ship date shown in the unit list has passed (as of today). ---- */
-const WATCH_TODAY = '2026-10-21';
+const WATCH_TODAY = '2026-10-22';
 function cvWatchUnits(t){
   return CV_RECORDS.filter(r=>r.type===t && r.stage!=='Shipped').map(r=>{ const p=cvPlanned(r); return (p.d && !p.est && p.d<WATCH_TODAY) ? {rec:r, planned:p.d, late:Math.round((new Date(WATCH_TODAY+'T00:00:00')-new Date(p.d+'T00:00:00'))/86400000)} : null; }).filter(Boolean).sort((a,b)=>b.late-a.late || parseInt(a.rec.unit.split('-')[1])-parseInt(b.rec.unit.split('-')[1]));
 }
@@ -829,7 +830,7 @@ const internalView = document.getElementById('internalView');
 btnClient.addEventListener('click', ()=>{
   btnClient.classList.add('active'); btnInternal.classList.remove('active');
   ClientView.classList.add('active'); internalView.classList.remove('active');
-  document.getElementById('switcherNote').innerHTML='Client view &middot; data as of Oct 21, 2026';
+  document.getElementById('switcherNote').innerHTML='Client view &middot; data as of Oct 22, 2026';
 });
 btnInternal.addEventListener('click', ()=>{
   btnInternal.classList.add('active'); btnClient.classList.remove('active');
@@ -856,7 +857,7 @@ const cvKpiDefs = [
   {key:'totalContracted', val:CV_KPIS.totalContracted, lbl:'Units On Order', sub:'ICB 280 · GCB 230 · FCB 35'},
   {key:'totalShipped', val:CV_KPIS.totalShipped, lbl:'Shipped To Date', sub:Math.round(CV_KPIS.totalShipped/CV_KPIS.totalContracted*100)+'% of order'},
   {key:'totalInPipeline', val:CV_KPIS.totalInPipeline, lbl:'In Production / Testing', sub:'in production, CAT or ready to ship'},
-  {key:'upcoming14d', val:CV_RECORDS.filter(r=>{const p=cvPlanned(r); if(!p.d||r.stage==='Shipped') return false; const df=(new Date(p.d+'T00:00:00')-new Date('2026-10-21T00:00:00'))/86400000; return df>=0&&df<=14;}).length, lbl:'Planned to Ship (14 days)', sub:'planned or scheduled by Nov 4'},
+  {key:'upcoming14d', val:CV_RECORDS.filter(r=>{const p=cvPlanned(r); if(!p.d||r.stage==='Shipped') return false; const df=(new Date(p.d+'T00:00:00')-new Date('2026-10-22T00:00:00'))/86400000; return df>=0&&df<=14;}).length, lbl:'Planned to Ship (14 days)', sub:'planned or scheduled by Nov 5'},
 ];
 const cvKpiRow = document.getElementById('cvKpiRow');
 cvKpiDefs.forEach(k=>{
@@ -925,7 +926,7 @@ cvRenderImpacts();
 function cvFmtWeek(w){ const d = new Date(w+'T00:00:00'); return (d.getMonth()+1)+'/'+d.getDate(); }
 const CV_TREND = (()=>{
   const wk = iso=>{ const d=new Date(iso+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7)); return d.toISOString().slice(0,10); };
-  const nowWk = wk('2026-10-21'), by={};
+  const nowWk = wk('2026-10-22'), by={};
   /* one count per shipped unit, by the week it shipped (tracker ship date; ICB units that pre-date the tracker use their RAIL CAT week) */
   CV_RECORDS.forEach(r=>{
     if(r.stage!=='Shipped') return;
@@ -1007,7 +1008,7 @@ function cvMatchesDrill(r){
     if(cvDrill.kpi==='upcoming14d'){
       const pl = cvPlanned(r); if(!pl.d || r.stage==='Shipped') return false;
       const d = new Date(pl.d+'T00:00:00');
-      const today = new Date('2026-10-21T00:00:00');
+      const today = new Date('2026-10-22T00:00:00');
       const diff = (d-today)/86400000;
       if(diff<0 || diff>14) return false;
     }
@@ -1055,7 +1056,7 @@ function cvRenderChips(){
    units currently listed in the table.
    ============================================================ */
 const USB = document.getElementById('usb'), USHEET = document.getElementById('usheet');
-const UNIT_ASOF = '2026-10-21';
+const UNIT_ASOF = '2026-10-22';
 let US = {list:[], idx:-1, mode:'cv'};
 const uEsc = x => String(x==null?'':x).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uKv = (k,v)=>`<div class="ukv"><span>${k}</span><b>${v}</b></div>`;
@@ -1393,7 +1394,7 @@ function matchesDrill(r){
     if(drill.kpi==='upcoming14d'){
       if(!r.plannedShip || r.shipped) return false;
       const d = new Date(r.plannedShip+'T00:00:00');
-      const today = new Date('2026-10-21T00:00:00');
+      const today = new Date('2026-10-22T00:00:00');
       const diff = (d-today)/86400000;
       if(diff<0 || diff>14) return false;
     }
@@ -1526,7 +1527,7 @@ function openScheduleModal(type, isClient){
   const catDone = isClient ? (SHIPPED_N[type] + recs.filter(r=>!(r.cvRec&&r.cvRec.stage==='Shipped') && r.actualCAT && r.actualCAT<=PACE_ASOF_CV).length) : sum.withActualCAT;
   const rtsNow = isClient ? recs.filter(r=>r.cvRec && r.cvRec.stage==='CAT Done \u2014 Awaiting Ship').length : 0;
   document.getElementById('schedModalSub').textContent = isClient
-    ? `Order M200480 \u2014 ${recs.length} ${type} units in the production queue, start to finish. Updated Oct 21, 2026.`
+    ? `Order M200480 \u2014 ${recs.length} ${type} units in the production queue, start to finish. Updated Oct 22, 2026.`
     : `Sourced from VoltaGrid RAIL (Rolling Action Item List), as of Oct 14, 2026 \u2014 the complete ${sum.total}-unit production queue for ${type}, start to finish.`;
 
   document.getElementById('schedModalStats').innerHTML = isClient ? `
@@ -1561,7 +1562,7 @@ function openScheduleModal(type, isClient){
 /* ---- weekly request vs delivery chart (replaces the monthly production-pace chart) ---- */
 const PACE_ASOF = '2026-10-14';
 /* Client view only: RAIL refreshed Oct 14, 2026. Shipped = RAIL production overview "Bases Shipped" (both batches) = the first N units in the RAIL queue (ICB Unit 258, GCB 167, FCB 51). */
-const PACE_ASOF_CV = '2026-10-21';
+const PACE_ASOF_CV = '2026-10-22';
 const SHIPPED_N = CV_KPIS.shipped;
 function paceAsOf(){ return schedState.Client ? PACE_ASOF_CV : PACE_ASOF; }
 /* Planned ship for the Client list: tracker date, else the RAIL ready-to-ship date, else the scheduled CAT date if still ahead (shown grey = estimate), else TBD */
@@ -1570,7 +1571,7 @@ function cvPlanned(r){
   if(r.plannedShip) return {d:r.plannedShip, est:false};
   const x = CV_SERIAL[r.unit];
   if(x && x.readyToShip) return {d:x.readyToShip, est:false};
-  if(x && x.forecastCAT && x.forecastCAT >= '2026-10-21') return {d:x.forecastCAT, est:true};
+  if(x && x.forecastCAT && x.forecastCAT >= '2026-10-22') return {d:x.forecastCAT, est:true};
   return {d:null, est:false};
 }
 function schedRecs(type){ return schedState.Client ? CV_RAIL[type] : RAIL_SCHEDULE[type]; }
