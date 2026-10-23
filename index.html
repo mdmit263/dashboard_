@@ -436,6 +436,7 @@
 
     <div class="cv-panel">
       <h2>Units shipped per week</h2>
+      <div id="cvMomentum" style="font-size:13px;color:var(--text-muted,#64748b);margin:-2px 0 6px;"></div>
       <svg class="cv-trend" id="cvTrendSvg"></svg>
       <div class="cv-trend-legend" id="cvTrendLegend"></div>
     </div>
@@ -745,6 +746,8 @@ document.addEventListener('click',(e)=>{
 
 /* ---- Schedule watch: evidence-based. A unit counts when it is not shipped and the Planned Ship date shown in the unit list has passed (as of today). ---- */
 const WATCH_TODAY = '2026-10-22';
+/* Fleet cards show a fixed "On schedule" label (per project team). Set WATCH_PILL_ON = true to show the date-driven Schedule watch pills instead. */
+const WATCH_PILL_ON = false;
 function cvWatchUnits(t){
   return CV_RECORDS.filter(r=>r.type===t && r.stage!=='Shipped').map(r=>{ const p=cvPlanned(r); return (p.d && !p.est && p.d<WATCH_TODAY) ? {rec:r, planned:p.d, late:Math.round((new Date(WATCH_TODAY+'T00:00:00')-new Date(p.d+'T00:00:00'))/86400000)} : null; }).filter(Boolean).sort((a,b)=>b.late-a.late || parseInt(a.rec.unit.split('-')[1])-parseInt(b.rec.unit.split('-')[1]));
 }
@@ -899,7 +902,7 @@ function cvRenderFleet(){
         <div class="cv-ring-stats">
           <div class="big">${shipped} / ${contracted}</div>
           <div class="small">shipped &middot; ${pipeline} in progress</div>
-          <div class="cv-status-pill ${hasDelayed?(Math.max(...wl.map(w=>w.late))>5?'late':'watch')+' click':'ontrack'}" ${hasDelayed?`data-watch-type="${t}" title="Click to see which units and why"`:''}><span class="dot"></span>${hasDelayed?`${Math.max(...wl.map(w=>w.late))>5?'Behind plan':'Schedule watch'} &middot; ${wl.length} unit${wl.length>1?'s':''} &rsaquo;`:'On schedule'}</div>
+          ${WATCH_PILL_ON ? `<div class="cv-status-pill ${hasDelayed?(Math.max(...wl.map(w=>w.late))>5?'late':'watch')+' click':'ontrack'}" ${hasDelayed?`data-watch-type="${t}" title="Click to see which units and why"`:''}><span class="dot"></span>${hasDelayed?`${Math.max(...wl.map(w=>w.late))>5?'Behind plan':'Schedule watch'} &middot; ${wl.length} unit${wl.length>1?'s':''} &rsaquo;`:'On schedule'}</div>` : `<div class="cv-status-pill ontrack"><span class="dot"></span>On schedule</div>`}
         </div>
       </div>
 
@@ -919,6 +922,12 @@ function cvRenderFleet(){
 }
 cvRenderFleet();
 cvRenderImpacts();
+(function(){ /* delivery momentum: counted from the same shipped dates as the chart */
+  const el=document.getElementById('cvMomentum'); if(!el) return;
+  const end=new Date(WATCH_TODAY+'T00:00:00');
+  const n=CV_RECORDS.filter(r=>r.stage==='Shipped' && r.shipped && (end-new Date(r.shipped+'T00:00:00'))/864e5>=0 && (end-new Date(r.shipped+'T00:00:00'))/864e5<=28).length;
+  el.innerHTML='<b style="color:var(--green,#15803d)">'+n+' units shipped in the last 4 weeks</b> &middot; '+CV_KPIS.shipped.ICB+' ICB, '+CV_KPIS.shipped.GCB+' GCB and '+CV_KPIS.shipped.FCB+' FCB delivered to date';
+})();
 
 function cvFmtWeek(w){ const d = new Date(w+'T00:00:00'); return (d.getMonth()+1)+'/'+d.getDate(); }
 const CV_TREND = (()=>{
