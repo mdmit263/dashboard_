@@ -440,7 +440,7 @@
       <div class="cv-trend-legend" id="cvTrendLegend"></div>
     </div>
 
-    <div style="background:#FEF3C7;color:#92400E;font-weight:700;font-size:12px;padding:8px 14px;border-radius:8px;margin:18px 0 0;">LAYOUT PREVIEW &mdash; the notices below are sample text, not real shipment impacts.</div><div id="cvImpactWrap"></div>
+    <div id="cvImpactWrap"></div>
 
     <div class="cv-section-label">Unit Status</div>
     <div class="cv-toolbar">
@@ -635,13 +635,10 @@ Object.keys(CV_RAIL).forEach(t=>CV_RAIL[t].forEach(u=>{ CV_SERIAL[t+'-'+u.serial
      reference:'CO-012'                        // change order / request number (optional)
    }
    ============================================================ */
-const IMPACTS = [
- {id:'S1',category:'schedule',title:'SAMPLE - Ship date moved for FCB-31 to FCB-35',detail:'SAMPLE TEXT ONLY. Example: planned ship dates for these units move out while an open item is resolved. Replace with the real reason.',scope:{type:'FCB',units:[[31,35]]},status:'Open',waitingOn:'VoltaGrid',raised:'2026-10-12',needBy:'2026-10-22',impactDays:7,reference:'SAMPLE-1'},
- {id:'S2',category:'changeorder',title:'SAMPLE - Change order pending approval',detail:'SAMPLE TEXT ONLY. Example: work on these units is on hold until the change order is approved.',scope:{type:'GCB',units:[[200,228]]},status:'Awaiting response',waitingOn:'VoltaGrid',raised:'2026-10-08',needBy:'2026-10-16',impactDays:10,reference:'SAMPLE-CO'},
- {id:'S3',category:'action',title:'SAMPLE - Client action item: confirm delivery details',detail:'SAMPLE TEXT ONLY.',scope:{type:'ALL'},status:'Open',waitingOn:'VoltaGrid',needBy:'2026-10-30'},
- {id:'S4',category:'material',title:'SAMPLE - Material status update',detail:'SAMPLE TEXT ONLY. Example: a component has a revised delivery date from the supplier.',scope:{type:'ICB',units:[[250,280]]},status:'Open',waitingOn:'Supplier',impactDays:5},
- {id:'S5',category:'changerequest',title:'SAMPLE - Client change request (resolved)',detail:'SAMPLE TEXT ONLY.',scope:{type:'ICB'},status:'Resolved',raised:'2026-09-20'}
-];
+/* Order Notes are switched OFF for go-live. To show them later: add entries to IMPACTS_ALL and set ORDER_NOTES_ON = true. */
+const ORDER_NOTES_ON = false;
+const IMPACTS_ALL = [];
+const IMPACTS = ORDER_NOTES_ON ? IMPACTS_ALL : [];
 const IMPACT_ASOF = '2026-10-22';
 const IMPACT_CATS = {
   schedule:{label:'Schedule Impact',c:'#B45309',b:'#FEF3C7'},
