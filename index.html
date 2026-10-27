@@ -479,9 +479,9 @@
         <div class="sub">ICB (M200480-01) &middot; GCB (M200480-03) &middot; FCB (M200480-02) &middot; production-to-ship pipeline</div>
       </div>
       <div class="meta">
-        Source: <b>ICB, GCB &amp; FCB status</b> tracker + <b>RAIL</b> (Oct 27, 2026)<br>
+        Source: <b>RAIL</b> (Oct 27, 2026) for ICB &middot; <b>GCB &amp; FCB status</b> tracker + <b>RAIL</b> for GCB and FCB<br>
         Ship to <b class="shipAddr"></b><br>
-        As of <b>Oct 27, 2026</b> &middot; 358 units in current tracking window
+        As of <b>Oct 27, 2026</b> &middot; 543 units listed
       </div>
     </div>
 
@@ -575,7 +575,7 @@ const RAIL_SCHEDULE = {"ICB":[{"seq":1,"unit":"ICB Unit 1","revSerial":"M200468-
 const RAIL_SUMMARY = {"ICB":{"total":362,"batches":{"M200468":82,"M200480":280},"withForecast":362,"withActualCAT":140,"withReadyToShip":140,"inTracker":93,"notYetInTracker":269},"GCB":{"total":294,"batches":{"M200468":68,"M200480":226},"withForecast":276,"withActualCAT":175,"withReadyToShip":174,"inTracker":226,"notYetInTracker":68},"FCB":{"total":53,"batches":{"M200468":18,"M200480":35},"withForecast":53,"withActualCAT":16,"withReadyToShip":13,"inTracker":35,"notYetInTracker":18}};
 const RAIL_CHART = {"ICB":[{"month":"2026-03","m468":30,"m480":0,"actual":30},{"month":"2026-04","m468":9,"m480":0,"actual":9},{"month":"2026-05","m468":23,"m480":0,"actual":23},{"month":"2026-06","m468":20,"m480":21,"actual":41},{"month":"2026-07","m468":0,"m480":39,"actual":39},{"month":"2026-08","m468":0,"m480":41,"actual":41},{"month":"2026-09","m468":0,"m480":63,"actual":63},{"month":"2026-10","m468":0,"m480":52,"actual":48},{"month":"2026-11","m468":0,"m480":48,"actual":48},{"month":"2026-12","m468":0,"m480":16,"actual":20}],"GCB":[{"month":"2026-04","m468":12,"m480":0,"actual":12},{"month":"2026-05","m468":16,"m480":0,"actual":16},{"month":"2026-06","m468":18,"m480":0,"actual":18},{"month":"2026-07","m468":0,"m480":15,"actual":15},{"month":"2026-08","m468":4,"m480":54,"actual":36},{"month":"2026-09","m468":0,"m480":54,"actual":28},{"month":"2026-10","m468":0,"m480":48,"actual":44},{"month":"2026-11","m468":0,"m480":54,"actual":61},{"month":"2026-12","m468":0,"m480":1,"actual":46}],"FCB":[{"month":"2026-04","m468":2,"m480":0,"actual":2},{"month":"2026-05","m468":8,"m480":0,"actual":8},{"month":"2026-06","m468":8,"m480":0,"actual":8},{"month":"2026-07","m468":0,"m480":6,"actual":6},{"month":"2026-08","m468":0,"m480":12,"actual":10},{"month":"2026-09","m468":0,"m480":12,"actual":10},{"month":"2026-10","m468":0,"m480":5,"actual":6},{"month":"2026-11","m468":0,"m480":0,"actual":3}]};
 /* Client view: M200480 order only (earlier M200468 units removed). Shipped = first N units of this order. */
-const CV_N = {ICB:195, GCB:109, FCB:22};
+const CV_N = {ICB:186, GCB:116, FCB:30};
 const CV_RAIL = (()=>{
   const trk = {}; RECORDS.forEach(r=>{ trk[r.unit]=r; });
   const out = {};
@@ -589,14 +589,15 @@ const CV_RAIL = (()=>{
   return out;
 })();
 /* Client list excludes the two M200468 GCB units (47A, 48B) that the tracker lists above the M200480-03 block */
-const CV_RECORDS = RECORDS.filter(r=>r.unit!=='GCB-47A' && r.unit!=='GCB-48B');
+/* ICB: unit counts come from the RAIL production overview (Total Units Shipped 268 less the 82 earlier-batch units = 186 of the M200480 order); the tracker's ICB unit numbers are not used because they do not line up with the RAIL numbering. */
+const CV_RECORDS = RECORDS.filter(r=>r.unit!=='GCB-47A' && r.unit!=='GCB-48B' && r.type!=='ICB');
 const CV_SERIAL = {};
 Object.keys(CV_RAIL).forEach(t=>CV_RAIL[t].forEach(u=>{ CV_SERIAL[t+'-'+u.serialNum] = u; }));
 /* ---- Client view: ONE unit model, so the cards, unit list, weekly chart and production schedule all show the same units and statuses ----
    Units are named TYPE-number (ICB-1 ... FCB-35) everywhere. Status comes from the live tracker (Oct 27) for every tracked unit.
    ICB units 1-187 pre-date the tracker, so they come from the RAIL sheet (Oct 27): units 1-176 shipped, the rest by RAIL CAT / ready-to-ship dates. */
 (function(){
-  const RAIL_ASOF='2026-10-27', ICB_BASE_SHIPPED=176, ICB_TODAY='2026-10-27', byUnit={};
+  const RAIL_ASOF='2026-10-27', ICB_BASE_SHIPPED=186, ICB_TODAY='2026-10-27', byUnit={};
   CV_RECORDS.forEach(r=>{ byUnit[r.unit]=r; });
   ['ICB','GCB','FCB'].forEach(t=>{
     const have=new Set(CV_RAIL[t].map(u=>u.serialNum));
@@ -609,7 +610,7 @@ Object.keys(CV_RAIL).forEach(t=>CV_RAIL[t].forEach(u=>{ CV_SERIAL[t+'-'+u.serial
     const id='ICB-'+u.serialNum; if(byUnit[id]) return;
     let stage, proxy=null;
     /* ICB: "ready to ship" in the source means shipped */
-    if(u.serialNum<=ICB_BASE_SHIPPED || (u.readyToShip && u.readyToShip<=ICB_TODAY)){ stage='Shipped'; proxy=u.readyToShip||u.actualCAT||u.forecastCAT||null; }
+    if(u.serialNum<=ICB_BASE_SHIPPED){ stage='Shipped'; proxy=u.readyToShip||u.actualCAT||u.forecastCAT||null; }
     else if(u.actualCAT && u.actualCAT<=RAIL_ASOF) stage='CAT Ready';
     else stage='Not Started';
     const rec={type:'ICB',unit:id,job:'M200480-01',yard:null,started:null,internalTestReady:null,catReady:null,catDone:u.actualCAT||null,plannedShip:null,shipped:(stage==='Shipped'&&u.readyToShip)?u.readyToShip:null,proxyShip:proxy,flag:null,stage};
