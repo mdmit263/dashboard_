@@ -390,16 +390,6 @@
   .wch-b table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px;}
   .wch-b th{background:#F1F5F9 !important;color:#475569 !important;text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);padding:6px 8px;border-bottom:1px solid var(--rev-border);}
   .wch-b td{padding:8px;border-bottom:1px solid #EEF2F7;} .wch-b tr.wu{cursor:pointer;} .wch-b tr.wu:hover td{background:#F8FAFC;}
-  .rsn{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:6px 0 14px;background:#FAFBFD;}
-  .rsn h4{margin:0 0 8px;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:#475569;}
-  .rsn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px;margin-bottom:10px;}
-  .rsn-cb{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#64748B;}
-  .rsn-cb i{width:16px;height:16px;border:1.5px solid #CBD5E1;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;line-height:1;background:#fff;flex:none;}
-  .rsn-cb.on{color:var(--text);font-weight:700;} .rsn-cb.on i{background:var(--rev-navy);border-color:var(--rev-navy);color:#fff;}
-  .rsn-item{border-top:1px solid var(--border);padding:9px 0 2px;font-size:12.5px;line-height:1.5;}
-  .rsn-item .tag{display:inline-block;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:800;margin-right:6px;background:#E0E7FF;color:#3730A3;}
-  .rsn-item .src{display:block;font-size:11px;color:var(--text-faint);margin-top:2px;}
-  .rsn-none{font-size:12.5px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:9px;}
   .wch-late{font-weight:800;color:#B45309;}
   .wch-note{border:1px solid #F5D9A5;background:#FFFBEB;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:12.5px;line-height:1.5;}
   .wch-note b{color:var(--rev-navy);display:block;}
@@ -790,27 +780,6 @@ function cvWatchSet(){ const set=new Set(); ['ICB','GCB','FCB'].forEach(t=>{ if(
   back.addEventListener('click',e=>{ if(e.target===back) back.classList.remove('open'); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') back.classList.remove('open'); });
 })();
-/* ---- Why behind plan: reason checklist + notes (shown when a "Behind plan" badge is opened) ----
-   Categories are ticked from the notes below. Add or edit notes in WATCH_REASONS; a type with no notes shows "Reason not yet recorded". */
-const REASON_CATS = ['Vendor delay','Client response delay','Client site / access','Material availability','Engineering / design change','Quality / rework','Other'];
-const WATCH_REASONS = {
-  GCB:[
-    {cat:'Vendor delay', note:'400A breakers and interlocks arrived late from the supplier; GCBs were held at REV until the breakers arrived.', src:'RAIL ICB/GCB/FCB log #22 · Sep 2 to Sep 16 · closed'},
-    {cat:'Client response delay', note:'4 GCBs were ready to ship but waited on VoltaGrid to confirm the REV-fabricated interlock was acceptable.', src:'RAIL ICB/GCB/FCB log #24 · Sep 9 to Sep 16 · closed'},
-    {cat:'Client response delay', note:'VoltaGrid review of the returned switchboard IFC comments caused a 3-week delay (program-wide).', src:'RAIL ICB/GCB/FCB log #3 · Apr 29 to Jun 12 · closed'}
-  ],
-  ICB:[],
-  FCB:[
-    {cat:'Other', note:'Units 32 to 35 are flagged "Transfer pending" in the status tracker.', src:'Status tracker flag · Oct 27'}
-  ]
-};
-function cvReasonBlock(t){
-  const items = WATCH_REASONS[t]||[], on = new Set(items.map(i=>i.cat));
-  return `<div class="rsn"><h4>Why this is behind plan</h4>
-    <div class="rsn-grid">${REASON_CATS.map(c=>`<div class="rsn-cb ${on.has(c)?'on':''}"><i>${on.has(c)?'&#10003;':''}</i>${impEsc(c)}</div>`).join('')}</div>
-    ${items.length ? items.map(i=>`<div class="rsn-item"><span class="tag">${impEsc(i.cat)}</span>${impEsc(i.note)}<span class="src">${impEsc(i.src)}</span></div>`).join('') : '<div class="rsn-none">Reason not yet recorded for this unit type.</div>'}
-  </div>`;
-}
 function cvOpenWatch(t){
   const list = cvWatchUnits(t), box=document.getElementById('wchBox');
   const notices = IMPACTS.filter(n=>impIsOpen(n) && list.some(w=>impMatches(n,w.rec)));
@@ -818,7 +787,6 @@ function cvOpenWatch(t){
   box.innerHTML = `<div class="wch-h"><div><h3>${t} &middot; Schedule details</h3><p>${list.length} unit${list.length>1?'s are':' is'} behind plan as of ${impFmt(WATCH_TODAY)}: ${nShip} past the planned ship date and ${nCat} that finished CAT more than 5 days after the RAIL forecast${maxLate?` (worst case ${maxLate} days)`:''}. Each unit below can be opened for its full progress timeline.</p></div><button class="wch-x" id="wchX">&times;</button></div>
     <div class="wch-b">
       ${notices.map(n=>{ const c=IMPACT_CATS[n.category]||IMPACT_CATS.other; return `<div class="wch-note"><b>${impEsc(c.label)} &middot; ${impEsc(n.title)}</b>${impEsc(n.detail||'')}<div style="margin-top:4px;color:var(--text-muted);font-size:12px;">${n.waitingOn?'Waiting on <b style="display:inline;color:var(--text)">'+impEsc(n.waitingOn)+'</b>':''}${n.needBy?(n.waitingOn?' &middot; ':'')+'Needed by '+impFmt(n.needBy):''}${n.reference?' &middot; Ref '+impEsc(n.reference):''}</div></div>`; }).join('')}
-      ${cvReasonBlock(t)}
       <table><thead><tr><th>Unit</th><th>Status</th><th>Planned date</th><th>Behind by</th></tr></thead><tbody>
       ${list.map(w=>`<tr class="wu" data-wunit="${w.rec.unit}"><td style="font-family:'SFMono-Regular',Consolas,monospace;font-weight:700;">${w.rec.unit}</td><td>${cvStatus(w.rec)}</td><td>${impFmt(w.planned)}<span style="display:block;font-size:11px;color:var(--text-faint);">${w.kind==='cat'?'Forecast CAT; actual '+impFmt(w.actual):'Planned ship'}</span></td><td class="wch-late">${w.late} day${w.late>1?'s':''}</td></tr>`).join('')}
       </tbody></table>
