@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BETA DEMO — VoltaGrid Delivery Portal</title>
+<title>REV — VoltaGrid Delivery Portal</title>
 <style>
   :root{
     /* REV brand */
@@ -418,7 +418,7 @@
     <button id="btnClient" class="active">Client Portal</button>
     <button id="btnInternal">Internal — REV Team</button>
   </div>
-  <div class="switcher-note" id="switcherNote">Client View &middot; data as of Oct 29, 2026</div>
+  <div class="switcher-note" id="switcherNote">CLient View &middot; data as of Oct 29, 2026</div>
 </div>
 
 <!-- ============================================================ -->
@@ -790,7 +790,7 @@ function cvOpenWatch(t){
   const list = cvWatchUnits(t), box=document.getElementById('wchBox');
   const notices = IMPACTS.filter(n=>impIsOpen(n) && list.some(w=>impMatches(n,w.rec)));
   const maxLate = Math.max(0,...list.map(w=>w.late)), nShip=list.filter(w=>w.kind==='ship').length, nCat=list.filter(w=>w.kind==='cat').length;
-  box.innerHTML = `<div class="wch-h"><div><h3>${t} &middot; Schedule details</h3><p>${list.length} unit${list.length>1?'s are':' is'} behind plan as of ${impFmt(WATCH_TODAY)}: ${nShip} past the planned ship date and ${nCat} that finished CAT more than 5 days after the RAIL forecast${maxLate?` (worst case ${maxLate} days)`:''}. Each unit below can be opened for its full progress timeline.</p></div><button class="wch-x" id="wchX">&times;</button></div>
+  box.innerHTML = `<div class="wch-h"><div><h3>${t} &middot; Schedule details</h3><p>${list.length} unit${list.length>1?'s are':' is'} behind plan as of ${impFmt(WATCH_TODAY)}.</p></div><button class="wch-x" id="wchX">&times;</button></div>
     <div class="wch-b">
       ${notices.map(n=>{ const c=IMPACT_CATS[n.category]||IMPACT_CATS.other; return `<div class="wch-note"><b>${impEsc(c.label)} &middot; ${impEsc(n.title)}</b>${impEsc(n.detail||'')}<div style="margin-top:4px;color:var(--text-muted);font-size:12px;">${n.waitingOn?'Waiting on <b style="display:inline;color:var(--text)">'+impEsc(n.waitingOn)+'</b>':''}${n.needBy?(n.waitingOn?' &middot; ':'')+'Needed by '+impFmt(n.needBy):''}${n.reference?' &middot; Ref '+impEsc(n.reference):''}</div></div>`; }).join('')}
       <table><thead><tr><th>Unit</th><th>Status</th><th>Planned date</th><th>Behind by</th></tr></thead><tbody>
